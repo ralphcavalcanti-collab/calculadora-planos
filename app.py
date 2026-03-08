@@ -18,9 +18,9 @@ if senha_digitada == "senha123":
     valor_hora_acompanhamento_pres = 500
     valor_consulta_online = 550
     valor_hora_acompanhamento_on = 350
-    valor_nutri = 250
+    valor_custo_nutri = 250
     
-    # Valores Medicação (Custos invisíveis para o usuário final)
+    # Valores Medicação e Margens
     margem_lucro = 1.50
     
     custo_base_tirzepatida = 63.74
@@ -35,14 +35,15 @@ if senha_digitada == "senha123":
     # --- INTERFACE (BOTÕES E MENUS) ---
     col1, col2 = st.columns(2)
     with col1:
-        primeira_vez = st.radio("O paciente é de Primeira Vez?", ["Sim", "Não"])
-    with col2:
         modalidade = st.radio("Modalidade de atendimento:", ["Online (Telemedicina)", "Presencial"])
+    with col2:
+        primeira_vez = st.radio("O paciente é de Primeira Vez?", ["Sim", "Não"])
 
     st.divider()
 
     valor_medico = 0
     qtd_nutri = 0
+    valor_venda_nutri = valor_custo_nutri # Começa com o valor de repasse padrão
     nome_plano = ""
     
     # --- LÓGICA ONLINE ---
@@ -50,8 +51,8 @@ if senha_digitada == "senha123":
         opcao = st.selectbox("Escolha o pacote Online:", [
             "Selecione uma opção...",
             "Plano de Acompanhamento Online (2 Meses)",
-            "1 Consulta TM Avulsa",
-            "2 Consultas TM Avulsas"
+            "1 Consulta TM",
+            "2 Consultas TM"
         ])
         
         if opcao == "Plano de Acompanhamento Online (2 Meses)":
@@ -62,9 +63,9 @@ if senha_digitada == "senha123":
             else:
                 valor_medico = (2 * valor_consulta_online) + (1 * valor_hora_acompanhamento_on)
                 
-        elif opcao in ["1 Consulta TM Avulsa", "2 Consultas TM Avulsas"]:
+        elif opcao in ["1 Consulta TM", "2 Consultas TM"]:
             nome_plano = opcao
-            if opcao == "1 Consulta TM Avulsa":
+            if opcao == "1 Consulta TM":
                 valor_medico = valor_consulta_online
             else:
                 valor_medico = 1000
@@ -78,27 +79,27 @@ if senha_digitada == "senha123":
         opcao = st.selectbox("Escolha o pacote Presencial:", [
             "Selecione uma opção...",
             "Plano Inicial (2 Meses)",
-            "Plano Seguimento (3 Meses)",
-            "1 Consulta Presencial Avulsa",
-            "2 Consultas Presenciais Avulsas"
+            "Plano de Seguimento (3 Meses)",
+            "1 Consulta Presencial",
+            "2 Consultas Presenciais"
         ])
         
         if opcao == "Plano Inicial (2 Meses)":
-            nome_plano = "Plano Inicial Presencial (2 Meses)"
+            nome_plano = opcao
             qtd_nutri = 2
             if primeira_vez == "Sim":
                 valor_medico = (3 * valor_hora_presencial) + (4 * valor_hora_acompanhamento_pres)
             else:
                 valor_medico = (2 * valor_hora_presencial) + (4 * valor_hora_acompanhamento_pres)
                 
-        elif opcao == "Plano Seguimento (3 Meses)":
-            nome_plano = "Plano de Seguimento Presencial (3 Meses)"
+        elif opcao == "Plano de Seguimento (3 Meses)":
+            nome_plano = opcao
             qtd_nutri = 3
             valor_medico = (3 * valor_hora_presencial) + (6 * valor_hora_acompanhamento_pres)
             
-        elif opcao in ["1 Consulta Presencial Avulsa", "2 Consultas Presenciais Avulsas"]:
+        elif opcao in ["1 Consulta Presencial", "2 Consultas Presenciais"]:
             nome_plano = opcao
-            if opcao == "1 Consulta Presencial Avulsa":
+            if opcao == "1 Consulta Presencial":
                 valor_medico = valor_hora_presencial
             else:
                 valor_medico = 1400
@@ -106,13 +107,15 @@ if senha_digitada == "senha123":
             inclui_nutri = st.radio("Incluir consulta nutricional?", ["Não", "Sim"])
             if inclui_nutri == "Sim":
                 qtd_nutri = st.number_input("Quantas consultas com a nutricionista?", min_value=1, step=1)
+                # Adiciona a margem de 50% na nutrição apenas nestes pacotes avulsos presenciais
+                valor_venda_nutri = valor_custo_nutri * margem_lucro
 
     # --- LÓGICA DE MEDICAÇÃO ---
     valor_medicacao_total = 0
     resumo_meds = []
 
-    # 1. TIRZEPATIDA (Apenas para planos de acompanhamento de 2 ou 3 meses)
-    if "Meses" in nome_plano:
+    # 1. TIRZEPATIDA (Apenas para planos presenciais de 2 ou 3 meses)
+    if modalidade == "Presencial" and "Meses" in nome_plano:
         st.divider()
         st.subheader("💊 Tirzepatida (Inclusa no Plano)")
         
@@ -162,7 +165,7 @@ if senha_digitada == "senha123":
 
     # --- CÁLCULO E TELA FINAL ---
     if nome_plano and nome_plano != "Selecione uma opção...":
-        total_nutri = qtd_nutri * valor_nutri
+        total_nutri = qtd_nutri * valor_venda_nutri
         valor_total = valor_medico + total_nutri + valor_medicacao_total
 
         st.divider()
@@ -171,7 +174,10 @@ if senha_digitada == "senha123":
         st.write(f"**Valor da parte Médica:** R$ {valor_medico:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         
         if total_nutri > 0:
-            st.write(f"**Valor repasse Nutricionista ({qtd_nutri}x):** R$ {total_nutri:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            if valor_venda_nutri > valor_custo_nutri:
+                st.write(f"**Valor Nutrição ({qtd_nutri}x):** R$ {total_nutri:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            else:
+                st.write(f"**Valor repasse Nutricionista ({qtd_nutri}x):** R$ {total_nutri:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             
         if valor_medicacao_total > 0:
             meds_texto = " + ".join(resumo_meds)
