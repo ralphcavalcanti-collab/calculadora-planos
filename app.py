@@ -7,7 +7,6 @@ st.set_page_config(page_title="Calculadora de Orçamentos", page_icon="🩺")
 st.title("Acesso Restrito 🔒")
 senha_digitada = st.text_input("Digite a senha para acessar a calculadora:", type="password")
 
-# Você pode mudar "senha123" para a senha que preferir
 if senha_digitada == "senha123": 
     
     st.divider()
@@ -20,20 +19,25 @@ if senha_digitada == "senha123":
     valor_consulta_online = 550
     valor_hora_acompanhamento_on = 350
     valor_nutri = 250
+    
+    # Valores Base Medicação (Tirzepatida)
+    custo_base_2_5mg = 63.74
+    margem_lucro = 1.50 # 50% de lucro em cima do custo
 
     # --- INTERFACE (BOTÕES E MENUS) ---
     col1, col2 = st.columns(2)
     with col1:
-        modalidade = st.radio("Modalidade de atendimento:", ["Online (Telemedicina)", "Presencial"])
-    with col2:
         primeira_vez = st.radio("O paciente é de Primeira Vez?", ["Sim", "Não"])
-    
+    with col2:
+        modalidade = st.radio("Modalidade de atendimento:", ["Online (Telemedicina)", "Presencial"])
 
     st.divider()
 
     valor_medico = 0
     qtd_nutri = 0
     nome_plano = ""
+    valor_medicacao = 0
+    detalhe_medicacao = ""
 
     # --- LÓGICA ONLINE ---
     if modalidade == "Online (Telemedicina)":
@@ -97,10 +101,45 @@ if senha_digitada == "senha123":
             if inclui_nutri == "Sim":
                 qtd_nutri = st.number_input("Quantas consultas com a nutricionista?", min_value=1, step=1)
 
+    # --- LÓGICA DE MEDICAÇÃO (TIRZEPATIDA) ---
+    # Só mostra a opção se for um plano de 2 ou 3 meses
+    if "Meses" in nome_plano:
+        st.divider()
+        st.subheader("💊 Inclusão de Medicação")
+        inclui_med = st.radio("Incluir Tirzepatida no pacote?", ["Não", "Sim"])
+        
+        if inclui_med == "Sim":
+            dosagem = st.selectbox("Qual a dosagem por aplicação?", ["2,5mg", "5mg", "7,5mg", "10mg"])
+            
+            # Define o multiplicador com base na dosagem
+            if dosagem == "2,5mg":
+                multiplicador = 1
+            elif dosagem == "5mg":
+                multiplicador = 2
+            elif dosagem == "7,5mg":
+                multiplicador = 3
+            elif dosagem == "10mg":
+                multiplicador = 4
+                
+            # Calcula o valor de venda de 1 aplicação
+            custo_aplicacao = custo_base_2_5mg * multiplicador
+            venda_aplicacao = custo_aplicacao * margem_lucro
+            
+            # Define a quantidade de aplicações pelo tipo de plano
+            if "2 Meses" in nome_plano:
+                qtd_aplicacoes = 8
+            elif "3 Meses" in nome_plano:
+                qtd_aplicacoes = 12
+                
+            valor_medicacao = venda_aplicacao * qtd_aplicacoes
+            detalhe_medicacao = f"{qtd_aplicacoes} aplicações de {dosagem}"
+            
+            st.info(f"Cálculo: {qtd_aplicacoes} aplicações de {dosagem} com 50% de margem.")
+
     # --- CÁLCULO E TELA FINAL ---
     if nome_plano and nome_plano != "Selecione uma opção...":
         total_nutri = qtd_nutri * valor_nutri
-        valor_total = valor_medico + total_nutri
+        valor_total = valor_medico + total_nutri + valor_medicacao
 
         st.divider()
         st.subheader("📋 Resumo do Orçamento")
@@ -109,8 +148,6 @@ if senha_digitada == "senha123":
         
         if total_nutri > 0:
             st.write(f"**Valor repasse Nutricionista ({qtd_nutri}x):** R$ {total_nutri:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        
-        st.success(f"**VALOR TOTAL A COBRAR: R$ {valor_total:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
-
-elif senha_digitada != "":
-    st.error("Senha incorreta. Tente novamente.")
+            
+        if valor_medicacao > 0:
+            st.write(f"**Medicação Inclusa ({detalhe_medicacao}):** R$ {valor_medicacao:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
