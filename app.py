@@ -48,6 +48,10 @@ if senha_digitada == "senha123":
     
     # --- LÓGICA ONLINE ---
     if modalidade == "Online (Telemedicina)":
+        
+        # Adiciona a margem de 50% na nutrição para QUALQUER pacote online
+        valor_venda_nutri = valor_custo_nutri * margem_lucro 
+        
         opcao = st.selectbox("Escolha o pacote Online:", [
             "Selecione uma opção...",
             "Plano de Acompanhamento Online (2 Meses)",
@@ -114,27 +118,36 @@ if senha_digitada == "senha123":
     valor_medicacao_total = 0
     resumo_meds = []
 
-    # 1. TIRZEPATIDA (Apenas para planos presenciais de 2 ou 3 meses)
-    if modalidade == "Presencial" and "Meses" in nome_plano:
+    # 1. TIRZEPATIDA (Liberada para todos os pacotes Presenciais)
+    if modalidade == "Presencial" and nome_plano != "Selecione uma opção...":
         st.divider()
-        st.subheader("💊 Tirzepatida (Inclusa no Plano)")
+        st.subheader("💊 Tirzepatida")
         
-        limite_app = 8 if "2 Meses" in nome_plano else 12
-        st.write(f"Distribua as **{limite_app} aplicações** entre as dosagens abaixo:")
+        is_plano_fechado = "Meses" in nome_plano
+        
+        if is_plano_fechado:
+            limite_app = 8 if "2 Meses" in nome_plano else 12
+            st.write(f"Distribua as **{limite_app} aplicações** inclusas no plano:")
+            max_val = limite_app
+        else:
+            st.write("Adicione a quantidade de aplicações avulsas, se houver:")
+            max_val = 24 # Limite flexível para consultas avulsas
         
         c1, c2, c3, c4 = st.columns(4)
-        with c1: qtd_2_5 = st.number_input("2,5mg", min_value=0, max_value=limite_app, step=1)
-        with c2: qtd_5_0 = st.number_input("5mg", min_value=0, max_value=limite_app, step=1)
-        with c3: qtd_7_5 = st.number_input("7,5mg", min_value=0, max_value=limite_app, step=1)
-        with c4: qtd_10_0 = st.number_input("10mg", min_value=0, max_value=limite_app, step=1)
+        with c1: qtd_2_5 = st.number_input("2,5mg", min_value=0, max_value=max_val, step=1)
+        with c2: qtd_5_0 = st.number_input("5mg", min_value=0, max_value=max_val, step=1)
+        with c3: qtd_7_5 = st.number_input("7,5mg", min_value=0, max_value=max_val, step=1)
+        with c4: qtd_10_0 = st.number_input("10mg", min_value=0, max_value=max_val, step=1)
         
         total_selecionado = qtd_2_5 + qtd_5_0 + qtd_7_5 + qtd_10_0
         
-        if total_selecionado != limite_app:
-            st.warning(f"⚠️ Atenção: Você selecionou {total_selecionado} aplicações. O plano exige {limite_app}.")
-        else:
-            st.success("✅ Quantidade de aplicações correta!")
-            
+        # Só exibe o aviso de quantidade cravada se for um plano fechado
+        if is_plano_fechado:
+            if total_selecionado != limite_app:
+                st.warning(f"⚠️ Atenção: Você selecionou {total_selecionado} aplicações. O plano exige {limite_app}.")
+            else:
+                st.success("✅ Quantidade de aplicações correta!")
+                
         valor_tirzepatida = (qtd_2_5 * venda_2_5mg) + (qtd_5_0 * venda_5_0mg) + (qtd_7_5 * venda_7_5mg) + (qtd_10_0 * venda_10_0mg)
         valor_medicacao_total += valor_tirzepatida
         
