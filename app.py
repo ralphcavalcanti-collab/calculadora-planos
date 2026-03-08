@@ -3,13 +3,25 @@ import streamlit as st
 # Configuração da aba do navegador
 st.set_page_config(page_title="Calculadora de Orçamentos", page_icon="🩺")
 
-# --- TELA DE SENHA ---
-st.title("Acesso Restrito 🔒")
-senha_digitada = st.text_input("Digite a senha para acessar a calculadora:", type="password")
+# --- SISTEMA DE MEMÓRIA (SESSION STATE) ---
+# Verifica se o usuário já está "logado" nesta sessão
+if "autenticado" not in st.session_state:
+    st.session_state.autenticado = False
 
-if senha_digitada == "senha123": 
+# --- TELA DE SENHA ---
+if not st.session_state.autenticado:
+    st.title("Acesso Restrito 🔒")
+    senha_digitada = st.text_input("Digite a senha para acessar a calculadora:", type="password")
     
-    st.divider()
+    if senha_digitada == "senha123": 
+        st.session_state.autenticado = True
+        st.rerun() # Atualiza a página imediatamente para sumir com o login
+    elif senha_digitada != "":
+        st.error("Senha incorreta. Tente novamente.")
+
+# --- CALCULADORA (SÓ APARECE SE AUTENTICADO) ---
+if st.session_state.autenticado:
+    
     st.title("Calculadora de Orçamentos 🩺")
     st.write("Selecione as opções abaixo para gerar o orçamento do paciente.")
 
@@ -141,7 +153,6 @@ if senha_digitada == "senha123":
         
         total_selecionado = qtd_2_5 + qtd_5_0 + qtd_7_5 + qtd_10_0
         
-        # Só exibe o aviso de quantidade cravada se for um plano fechado
         if is_plano_fechado:
             if total_selecionado != limite_app:
                 st.warning(f"⚠️ Atenção: Você selecionou {total_selecionado} aplicações. O plano exige {limite_app}.")
@@ -197,6 +208,3 @@ if senha_digitada == "senha123":
             st.write(f"**Medicação ({meds_texto}):** R$ {valor_medicacao_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         
         st.success(f"**VALOR TOTAL A COBRAR: R$ {valor_total:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
-
-elif senha_digitada != "":
-    st.error("Senha incorreta. Tente novamente.")
