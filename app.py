@@ -47,7 +47,7 @@ if st.session_state.autenticado:
     # --- INTERFACE (BOTÕES E MENUS) ---
     col1, col2 = st.columns(2)
     with col1:
-        modalidade = st.radio("Modalidade de atendimento:", ["Online (Telemedicina)", "Presencial"])
+        modalidade = st.radio("Modalidade de atendimento:", ["Presencial","Online (Telemedicina)"])
     with col2:
         primeira_vez = st.radio("O paciente é de Primeira Vez?", ["Sim", "Não"])
 
