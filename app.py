@@ -4,7 +4,6 @@ import streamlit as st
 st.set_page_config(page_title="Calculadora de Orçamentos", page_icon="🩺")
 
 # --- SISTEMA DE MEMÓRIA (SESSION STATE) ---
-# Verifica se o usuário já está "logado" nesta sessão
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
 
@@ -15,7 +14,7 @@ if not st.session_state.autenticado:
     
     if senha_digitada == "senha123": 
         st.session_state.autenticado = True
-        st.rerun() # Atualiza a página imediatamente para sumir com o login
+        st.rerun() 
     elif senha_digitada != "":
         st.error("Senha incorreta. Tente novamente.")
 
@@ -47,7 +46,7 @@ if st.session_state.autenticado:
     # --- INTERFACE (BOTÕES E MENUS) ---
     col1, col2 = st.columns(2)
     with col1:
-        modalidade = st.radio("Modalidade de atendimento:", ["Presencial","Online (Telemedicina)"])
+        modalidade = st.radio("Modalidade de atendimento:", ["Presencial", "Online (Telemedicina)"])
     with col2:
         primeira_vez = st.radio("O paciente é de Primeira Vez?", ["Sim", "Não"])
 
@@ -55,15 +54,12 @@ if st.session_state.autenticado:
 
     valor_medico = 0
     qtd_nutri = 0
-    valor_venda_nutri = valor_custo_nutri # Começa com o valor de repasse padrão
+    valor_venda_nutri = valor_custo_nutri 
     nome_plano = ""
     
     # --- LÓGICA ONLINE ---
     if modalidade == "Online (Telemedicina)":
-        
-        # Adiciona a margem de 50% na nutrição para QUALQUER pacote online
         valor_venda_nutri = valor_custo_nutri * margem_lucro 
-        
         opcao = st.selectbox("Escolha o pacote Online:", [
             "Selecione uma opção...",
             "Plano de Acompanhamento Online (2 Meses)",
@@ -123,14 +119,19 @@ if st.session_state.autenticado:
             inclui_nutri = st.radio("Incluir consulta nutricional?", ["Não", "Sim"])
             if inclui_nutri == "Sim":
                 qtd_nutri = st.number_input("Quantas consultas com a nutricionista?", min_value=1, step=1)
-                # Adiciona a margem de 50% na nutrição apenas nestes pacotes avulsos presenciais
                 valor_venda_nutri = valor_custo_nutri * margem_lucro
 
     # --- LÓGICA DE MEDICAÇÃO ---
     valor_medicacao_total = 0
+    custo_real_medicacao = 0 # Variável para guardar o custo puro de farmácia
     resumo_meds = []
+    
+    # Variáveis para a Tirzepatida
+    qtd_2_5 = qtd_5_0 = qtd_7_5 = qtd_10_0 = 0
+    # Variáveis para Vitaminas
+    qtd_vit_d = qtd_vit_b12 = 0
 
-    # 1. TIRZEPATIDA (Liberada para todos os pacotes Presenciais)
+    # 1. TIRZEPATIDA 
     if modalidade == "Presencial" and nome_plano != "Selecione uma opção...":
         st.divider()
         st.subheader("💊 Tirzepatida")
@@ -143,7 +144,7 @@ if st.session_state.autenticado:
             max_val = limite_app
         else:
             st.write("Adicione a quantidade de aplicações avulsas, se houver:")
-            max_val = 24 # Limite flexível para consultas avulsas
+            max_val = 24 
         
         c1, c2, c3, c4 = st.columns(4)
         with c1: qtd_2_5 = st.number_input("2,5mg", min_value=0, max_value=max_val, step=1)
@@ -159,13 +160,20 @@ if st.session_state.autenticado:
             else:
                 st.success("✅ Quantidade de aplicações correta!")
                 
+        # Cálculo de Venda
         valor_tirzepatida = (qtd_2_5 * venda_2_5mg) + (qtd_5_0 * venda_5_0mg) + (qtd_7_5 * venda_7_5mg) + (qtd_10_0 * venda_10_0mg)
         valor_medicacao_total += valor_tirzepatida
+        
+        # Cálculo de Custo Puro
+        custo_real_medicacao += (qtd_2_5 * custo_base_tirzepatida * 1) + \
+                                (qtd_5_0 * custo_base_tirzepatida * 2) + \
+                                (qtd_7_5 * custo_base_tirzepatida * 3) + \
+                                (qtd_10_0 * custo_base_tirzepatida * 4)
         
         if total_selecionado > 0:
             resumo_meds.append(f"Tirzepatida ({total_selecionado} aplicações)")
 
-    # 2. VITAMINAS D e B12 (Apenas para a modalidade Presencial)
+    # 2. VITAMINAS D e B12
     if modalidade == "Presencial" and nome_plano != "Selecione uma opção...":
         st.divider()
         st.subheader("💉 Vitaminas Injetáveis")
@@ -179,32 +187,66 @@ if st.session_state.autenticado:
             
         valor_vit_d = qtd_vit_d * venda_vitamina
         valor_vit_b12 = qtd_vit_b12 * venda_vitamina
-        
         valor_medicacao_total += (valor_vit_d + valor_vit_b12)
+        
+        custo_real_medicacao += (qtd_vit_d + qtd_vit_b12) * custo_vitamina
         
         if qtd_vit_d > 0:
             resumo_meds.append(f"{qtd_vit_d}x Vitamina D")
         if qtd_vit_b12 > 0:
             resumo_meds.append(f"{qtd_vit_b12}x Vitamina B12")
 
-    # --- CÁLCULO E TELA FINAL ---
+    # --- CÁLCULO FINAL E ABAS DE RESULTADO ---
     if nome_plano and nome_plano != "Selecione uma opção...":
-        total_nutri = qtd_nutri * valor_venda_nutri
-        valor_total = valor_medico + total_nutri + valor_medicacao_total
+        total_nutri_venda = qtd_nutri * valor_venda_nutri
+        custo_nutri_real = qtd_nutri * valor_custo_nutri
+        
+        valor_total_bruto = valor_medico + total_nutri_venda + valor_medicacao_total
 
         st.divider()
-        st.subheader("📋 Resumo do Orçamento")
-        st.write(f"**Pacote Selecionado:** {nome_plano}")
-        st.write(f"**Valor da parte Médica:** R$ {valor_medico:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         
-        if total_nutri > 0:
-            if valor_venda_nutri > valor_custo_nutri:
-                st.write(f"**Valor Nutrição ({qtd_nutri}x):** R$ {total_nutri:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            else:
-                st.write(f"**Valor repasse Nutricionista ({qtd_nutri}x):** R$ {total_nutri:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        # Criação das duas abas na tela
+        aba_paciente, aba_clinica = st.tabs(["🗣️ Visão do Paciente", "💰 Visão da Clínica (Lucro Real)"])
+        
+        with aba_paciente:
+            st.subheader("📋 Resumo do Orçamento")
+            st.write(f"**Pacote Selecionado:** {nome_plano}")
+            st.write(f"**Serviço Médico:** R$ {valor_medico:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             
-        if valor_medicacao_total > 0:
-            meds_texto = " + ".join(resumo_meds)
-            st.write(f"**Medicação ({meds_texto}):** R$ {valor_medicacao_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        
-        st.success(f"**VALOR TOTAL A COBRAR: R$ {valor_total:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
+            if total_nutri_venda > 0:
+                if valor_venda_nutri > valor_custo_nutri:
+                    st.write(f"**Acompanhamento Nutricional ({qtd_nutri}x):** R$ {total_nutri_venda:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+                else:
+                    st.write(f"**Acompanhamento Nutricional ({qtd_nutri}x):** R$ {total_nutri_venda:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+                
+            if valor_medicacao_total > 0:
+                meds_texto = " + ".join(resumo_meds)
+                st.write(f"**Medicação ({meds_texto}):** R$ {valor_medicacao_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            
+            st.success(f"**VALOR TOTAL A COBRAR: R$ {valor_total_bruto:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
+
+        with aba_clinica:
+            st.subheader("📊 Análise Financeira")
+            
+            # Escolha da forma de pagamento para calcular a taxa
+            forma_pagamento = st.radio("Selecione a forma de pagamento do paciente:", ["Pix / Dinheiro", "Cartão de Crédito"], horizontal=True)
+            
+            # Impostos (15% sobre o total) e Taxa de Cartão (3,34% sobre o total se for crédito)
+            valor_imposto = valor_total_bruto * 0.15
+            valor_taxa_cartao = valor_total_bruto * 0.0334 if forma_pagamento == "Cartão de Crédito" else 0.0
+            
+            # Cálculo do Lucro Líquido
+            lucro_liquido = valor_total_bruto - valor_imposto - valor_taxa_cartao - custo_nutri_real - custo_real_medicacao
+            
+            st.write(f"**Faturamento Bruto:** R$ {valor_total_bruto:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            st.write("---")
+            st.write("**Descontos e Custos:**")
+            st.write(f"- Impostos (15%): R$ {valor_imposto:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            if valor_taxa_cartao > 0:
+                st.write(f"- Taxa Maquininha (3,34%): R$ {valor_taxa_cartao:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            if custo_nutri_real > 0:
+                st.write(f"- Repasse Nutricionista: R$ {custo_nutri_real:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            if custo_real_medicacao > 0:
+                st.write(f"- Custo de Farmácia (Medicação): R$ {custo_real_medicacao:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            st.write("---")
+            st.info(f"**LUCRO LÍQUIDO (O que sobra na clínica): R$ {lucro_liquido:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
