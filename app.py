@@ -24,9 +24,10 @@ if senha_digitada == "senha123":
     # --- INTERFACE (BOTÕES E MENUS) ---
     col1, col2 = st.columns(2)
     with col1:
-        primeira_vez = st.radio("O paciente é de Primeira Vez?", ["Sim", "Não"])
-    with col2:
         modalidade = st.radio("Modalidade de atendimento:", ["Online (Telemedicina)", "Presencial"])
+    with col2:
+        primeira_vez = st.radio("O paciente é de Primeira Vez?", ["Sim", "Não"])
+    
 
     st.divider()
 
