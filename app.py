@@ -1,5 +1,24 @@
 import streamlit as st
 
+# --- TELA DE SENHA ---
+st.title("Acesso Restrito 🔒")
+senha_digitada = st.text_input("Digite a senha para acessar a calculadora:", type="password")
+
+# Defina a sua senha aqui dentro das aspas:
+if senha_digitada == "senha123": 
+    
+    # --- DAQUI PARA BAIXO É O SEU CÓDIGO ORIGINAL ---
+    st.divider()
+    st.title("Calculadora de Orçamentos 🩺")
+    st.write("Selecione as opções abaixo para gerar o orçamento do paciente.")
+
+    # --- VALORES BASE ---
+    valor_hora_presencial = 750
+    # ... (COLE O RESTANTE DO CÓDIGO AQUI COM UM PEQUENO ESPAÇO/TAB ANTES DE CADA LINHA) ...
+
+elif senha_digitada != "":
+    st.error("Senha incorreta. Tente novamente.")
+    
 # --- TÍTULO DO APLICATIVO ---
 st.title("Calculadora de Orçamentos 🩺")
 st.write("Selecione as opções abaixo para gerar o orçamento do paciente.")
