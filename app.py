@@ -123,12 +123,10 @@ if st.session_state.autenticado:
 
     # --- LÓGICA DE MEDICAÇÃO ---
     valor_medicacao_total = 0
-    custo_real_medicacao = 0 # Variável para guardar o custo puro de farmácia
+    custo_real_medicacao = 0 
     resumo_meds = []
     
-    # Variáveis para a Tirzepatida
     qtd_2_5 = qtd_5_0 = qtd_7_5 = qtd_10_0 = 0
-    # Variáveis para Vitaminas
     qtd_vit_d = qtd_vit_b12 = 0
 
     # 1. TIRZEPATIDA 
@@ -160,11 +158,9 @@ if st.session_state.autenticado:
             else:
                 st.success("✅ Quantidade de aplicações correta!")
                 
-        # Cálculo de Venda
         valor_tirzepatida = (qtd_2_5 * venda_2_5mg) + (qtd_5_0 * venda_5_0mg) + (qtd_7_5 * venda_7_5mg) + (qtd_10_0 * venda_10_0mg)
         valor_medicacao_total += valor_tirzepatida
         
-        # Cálculo de Custo Puro
         custo_real_medicacao += (qtd_2_5 * custo_base_tirzepatida * 1) + \
                                 (qtd_5_0 * custo_base_tirzepatida * 2) + \
                                 (qtd_7_5 * custo_base_tirzepatida * 3) + \
@@ -205,7 +201,6 @@ if st.session_state.autenticado:
 
         st.divider()
         
-        # Criação das duas abas na tela
         aba_paciente, aba_clinica = st.tabs(["🗣️ Visão do Paciente", "💰 Visão da Clínica (Lucro Real)"])
         
         with aba_paciente:
@@ -214,10 +209,7 @@ if st.session_state.autenticado:
             st.write(f"**Serviço Médico:** R$ {valor_medico:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             
             if total_nutri_venda > 0:
-                if valor_venda_nutri > valor_custo_nutri:
-                    st.write(f"**Acompanhamento Nutricional ({qtd_nutri}x):** R$ {total_nutri_venda:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-                else:
-                    st.write(f"**Acompanhamento Nutricional ({qtd_nutri}x):** R$ {total_nutri_venda:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+                st.write(f"**Acompanhamento Nutricional ({qtd_nutri}x):** R$ {total_nutri_venda:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
                 
             if valor_medicacao_total > 0:
                 meds_texto = " + ".join(resumo_meds)
@@ -225,17 +217,40 @@ if st.session_state.autenticado:
             
             st.success(f"**VALOR TOTAL A COBRAR: R$ {valor_total_bruto:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
 
+            # --- GERAÇÃO DA MENSAGEM PARA O WHATSAPP ---
+            st.write("---")
+            st.write("📱 **Copie o texto abaixo para enviar ao paciente:**")
+            
+            # Montando o texto da mensagem
+            mensagem_wp = f"Olá! Tudo bem? Segue o detalhamento do seu orçamento:\n\n"
+            mensagem_wp += f"📋 *Pacote:* {nome_plano}\n"
+            
+            if "Acompanhamento" in nome_plano or "Inicial" in nome_plano or "Seguimento" in nome_plano:
+                mensagem_wp += f"👨‍⚕️ *Consultas e Acompanhamento Médico inclusos*\n"
+            else:
+                mensagem_wp += f"👨‍⚕️ *Serviço Médico incluso*\n"
+                
+            if total_nutri_venda > 0:
+                mensagem_wp += f"🥗 *{qtd_nutri}x Consultas com Nutricionista*\n"
+                
+            if valor_medicacao_total > 0:
+                meds_texto = " + ".join(resumo_meds)
+                mensagem_wp += f"💊 *Medicação Injetável:* {meds_texto}\n"
+                
+            mensagem_wp += f"\n💰 *Investimento Total:* R$ {valor_total_bruto:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            mensagem_wp += f"\n\nQualquer dúvida, estou à disposição!"
+            
+            # Caixa de código com botão de cópia nativo
+            st.code(mensagem_wp, language="text")
+
         with aba_clinica:
             st.subheader("📊 Análise Financeira")
             
-            # Escolha da forma de pagamento para calcular a taxa
             forma_pagamento = st.radio("Selecione a forma de pagamento do paciente:", ["Pix / Dinheiro", "Cartão de Crédito"], horizontal=True)
             
-            # Impostos (15% sobre o total) e Taxa de Cartão (3,34% sobre o total se for crédito)
             valor_imposto = valor_total_bruto * 0.15
             valor_taxa_cartao = valor_total_bruto * 0.0334 if forma_pagamento == "Cartão de Crédito" else 0.0
             
-            # Cálculo do Lucro Líquido
             lucro_liquido = valor_total_bruto - valor_imposto - valor_taxa_cartao - custo_nutri_real - custo_real_medicacao
             
             st.write(f"**Faturamento Bruto:** R$ {valor_total_bruto:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
