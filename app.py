@@ -51,4 +51,133 @@ if senha_digitada == "senha123":
             "Selecione uma opção...",
             "Plano de Acompanhamento Online (2 Meses)",
             "1 Consulta TM Avulsa",
-            "2
+            "2 Consultas TM Avulsas"
+        ])
+        
+        if opcao == "Plano de Acompanhamento Online (2 Meses)":
+            nome_plano = opcao
+            qtd_nutri = 2
+            if primeira_vez == "Sim":
+                valor_medico = (3 * valor_consulta_online) + (1 * valor_hora_acompanhamento_on)
+            else:
+                valor_medico = (2 * valor_consulta_online) + (1 * valor_hora_acompanhamento_on)
+                
+        elif opcao in ["1 Consulta TM Avulsa", "2 Consultas TM Avulsas"]:
+            nome_plano = opcao
+            if opcao == "1 Consulta TM Avulsa":
+                valor_medico = valor_consulta_online
+            else:
+                valor_medico = 1000
+                
+            inclui_nutri = st.radio("Incluir consulta nutricional?", ["Não", "Sim"])
+            if inclui_nutri == "Sim":
+                qtd_nutri = st.number_input("Quantas consultas com a nutricionista?", min_value=1, step=1)
+
+    # --- LÓGICA PRESENCIAL ---
+    elif modalidade == "Presencial":
+        opcao = st.selectbox("Escolha o pacote Presencial:", [
+            "Selecione uma opção...",
+            "Plano Inicial (2 Meses)",
+            "Plano Seguimento (3 Meses)",
+            "1 Consulta Presencial Avulsa",
+            "2 Consultas Presenciais Avulsas"
+        ])
+        
+        if opcao == "Plano Inicial (2 Meses)":
+            nome_plano = "Plano Inicial Presencial (2 Meses)"
+            qtd_nutri = 2
+            if primeira_vez == "Sim":
+                valor_medico = (3 * valor_hora_presencial) + (4 * valor_hora_acompanhamento_pres)
+            else:
+                valor_medico = (2 * valor_hora_presencial) + (4 * valor_hora_acompanhamento_pres)
+                
+        elif opcao == "Plano Seguimento (3 Meses)":
+            nome_plano = "Plano de Seguimento Presencial (3 Meses)"
+            qtd_nutri = 3
+            valor_medico = (3 * valor_hora_presencial) + (6 * valor_hora_acompanhamento_pres)
+            
+        elif opcao in ["1 Consulta Presencial Avulsa", "2 Consultas Presenciais Avulsas"]:
+            nome_plano = opcao
+            if opcao == "1 Consulta Presencial Avulsa":
+                valor_medico = valor_hora_presencial
+            else:
+                valor_medico = 1400
+                
+            inclui_nutri = st.radio("Incluir consulta nutricional?", ["Não", "Sim"])
+            if inclui_nutri == "Sim":
+                qtd_nutri = st.number_input("Quantas consultas com a nutricionista?", min_value=1, step=1)
+
+    # --- LÓGICA DE MEDICAÇÃO ---
+    valor_medicacao_total = 0
+    resumo_meds = []
+
+    # 1. TIRZEPATIDA (Apenas para planos de acompanhamento de 2 ou 3 meses)
+    if "Meses" in nome_plano:
+        st.divider()
+        st.subheader("💊 Tirzepatida (Inclusa no Plano)")
+        
+        limite_app = 8 if "2 Meses" in nome_plano else 12
+        st.write(f"Distribua as **{limite_app} aplicações** entre as dosagens abaixo:")
+        
+        c1, c2, c3, c4 = st.columns(4)
+        with c1: qtd_2_5 = st.number_input("2,5mg", min_value=0, max_value=limite_app, step=1)
+        with c2: qtd_5_0 = st.number_input("5mg", min_value=0, max_value=limite_app, step=1)
+        with c3: qtd_7_5 = st.number_input("7,5mg", min_value=0, max_value=limite_app, step=1)
+        with c4: qtd_10_0 = st.number_input("10mg", min_value=0, max_value=limite_app, step=1)
+        
+        total_selecionado = qtd_2_5 + qtd_5_0 + qtd_7_5 + qtd_10_0
+        
+        if total_selecionado != limite_app:
+            st.warning(f"⚠️ Atenção: Você selecionou {total_selecionado} aplicações. O plano exige {limite_app}.")
+        else:
+            st.success("✅ Quantidade de aplicações correta!")
+            
+        valor_tirzepatida = (qtd_2_5 * venda_2_5mg) + (qtd_5_0 * venda_5_0mg) + (qtd_7_5 * venda_7_5mg) + (qtd_10_0 * venda_10_0mg)
+        valor_medicacao_total += valor_tirzepatida
+        
+        if total_selecionado > 0:
+            resumo_meds.append(f"Tirzepatida ({total_selecionado} aplicações)")
+
+    # 2. VITAMINAS D e B12 (Apenas para a modalidade Presencial)
+    if modalidade == "Presencial" and nome_plano != "Selecione uma opção...":
+        st.divider()
+        st.subheader("💉 Vitaminas Injetáveis")
+        st.write("Adicione a quantidade de aplicações, se houver:")
+        
+        col_v1, col_v2 = st.columns(2)
+        with col_v1:
+            qtd_vit_d = st.number_input("Qtd Vitamina D", min_value=0, step=1)
+        with col_v2:
+            qtd_vit_b12 = st.number_input("Qtd Vitamina B12", min_value=0, step=1)
+            
+        valor_vit_d = qtd_vit_d * venda_vitamina
+        valor_vit_b12 = qtd_vit_b12 * venda_vitamina
+        
+        valor_medicacao_total += (valor_vit_d + valor_vit_b12)
+        
+        if qtd_vit_d > 0:
+            resumo_meds.append(f"{qtd_vit_d}x Vitamina D")
+        if qtd_vit_b12 > 0:
+            resumo_meds.append(f"{qtd_vit_b12}x Vitamina B12")
+
+    # --- CÁLCULO E TELA FINAL ---
+    if nome_plano and nome_plano != "Selecione uma opção...":
+        total_nutri = qtd_nutri * valor_nutri
+        valor_total = valor_medico + total_nutri + valor_medicacao_total
+
+        st.divider()
+        st.subheader("📋 Resumo do Orçamento")
+        st.write(f"**Pacote Selecionado:** {nome_plano}")
+        st.write(f"**Valor da parte Médica:** R$ {valor_medico:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        
+        if total_nutri > 0:
+            st.write(f"**Valor repasse Nutricionista ({qtd_nutri}x):** R$ {total_nutri:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            
+        if valor_medicacao_total > 0:
+            meds_texto = " + ".join(resumo_meds)
+            st.write(f"**Medicação ({meds_texto}):** R$ {valor_medicacao_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        
+        st.success(f"**VALOR TOTAL A COBRAR: R$ {valor_total:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
+
+elif senha_digitada != "":
+    st.error("Senha incorreta. Tente novamente.")
