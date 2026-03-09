@@ -10,7 +10,7 @@ if "autenticado" not in st.session_state:
 # --- TELA DE SENHA ---
 if not st.session_state.autenticado:
     st.title("Acesso Restrito 🔒")
-    senha_digitada = st.text_input("Digite a senha para acessar a calculadora:", type="password")
+    senha_digitada = st.text_input("Digite a senha para aceder à calculadora:", type="password")
     
     if senha_digitada == "senha123": 
         st.session_state.autenticado = True
@@ -28,7 +28,7 @@ if st.session_state.autenticado:
     valor_hora_presencial = 750
     valor_hora_acompanhamento_pres = 500
     valor_consulta_online = 550
-    valor_hora_acompanhamento_on = 350
+    valor_hora_acompanhamento_on = 350 # Mantido na base caso seja necessário no futuro
     valor_custo_nutri = 250
     
     # Valores Medicação e Margens
@@ -70,10 +70,8 @@ if st.session_state.autenticado:
         if opcao == "Plano de Acompanhamento Online (2 Meses)":
             nome_plano = opcao
             qtd_nutri = 2
-            if primeira_vez == "Sim":
-                valor_medico = (3 * valor_consulta_online) + (1 * valor_hora_acompanhamento_on)
-            else:
-                valor_medico = (2 * valor_consulta_online) + (1 * valor_hora_acompanhamento_on)
+            # Nova matemática: apenas 2 consultas online, sem hora de acompanhamento
+            valor_medico = 2 * valor_consulta_online
                 
         elif opcao in ["1 Consulta TM", "2 Consultas TM"]:
             nome_plano = opcao
@@ -154,7 +152,7 @@ if st.session_state.autenticado:
         
         if is_plano_fechado:
             if total_selecionado != limite_app:
-                st.warning(f"⚠️ Atenção: Você selecionou {total_selecionado} aplicações. O plano exige {limite_app}.")
+                st.warning(f"⚠️ Atenção: Selecionou {total_selecionado} aplicações. O plano exige {limite_app}.")
             else:
                 st.success("✅ Quantidade de aplicações correta!")
                 
@@ -253,12 +251,12 @@ if st.session_state.autenticado:
             
             lucro_liquido = valor_total_bruto - valor_imposto - valor_taxa_cartao - custo_nutri_real - custo_real_medicacao
             
-            st.write(f"**Faturamento Bruto:** R$ {valor_total_bruto:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            st.write(f"**Faturação Bruta:** R$ {valor_total_bruto:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             st.write("---")
             st.write("**Descontos e Custos:**")
             st.write(f"- Impostos (15%): R$ {valor_imposto:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             if valor_taxa_cartao > 0:
-                st.write(f"- Taxa Maquininha (3,34%): R$ {valor_taxa_cartao:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+                st.write(f"- Taxa Multibanco/Cartão (3,34%): R$ {valor_taxa_cartao:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             if custo_nutri_real > 0:
                 st.write(f"- Repasse Nutricionista: R$ {custo_nutri_real:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             if custo_real_medicacao > 0:
