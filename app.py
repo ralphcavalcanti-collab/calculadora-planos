@@ -10,7 +10,7 @@ if "autenticado" not in st.session_state:
 # --- TELA DE SENHA ---
 if not st.session_state.autenticado:
     st.title("Acesso Restrito 🔒")
-    senha_digitada = st.text_input("Digite a senha para aceder à calculadora:", type="password")
+    senha_digitada = st.text_input("Digite a senha para acessar a calculadora:", type="password")
     
     if senha_digitada == "senha123": 
         st.session_state.autenticado = True
@@ -50,12 +50,12 @@ if st.session_state.autenticado:
 
     valor_medico = 0
     qtd_nutri = 0
-    valor_venda_nutri = valor_custo_nutri 
+    # Regra global: a venda da nutrição SEMPRE tem a margem de 50%
+    valor_venda_nutri = valor_custo_nutri * margem_lucro 
     nome_plano = ""
     
     # --- LÓGICA ONLINE ---
     if modalidade == "Online (Telemedicina)":
-        valor_venda_nutri = valor_custo_nutri * margem_lucro 
         opcao = st.selectbox("Escolha o pacote Online:", [
             "Selecione uma opção...",
             "Plano de Acompanhamento Online (2 Meses)",
@@ -92,7 +92,6 @@ if st.session_state.autenticado:
         if opcao == "Plano Inicial (2 Meses)":
             nome_plano = opcao
             qtd_nutri = 2
-            # Como retiramos a pergunta de 1ª vez, fixamos em 2h de consulta + 4h de acompanhamento
             valor_medico = (2 * valor_hora_presencial) + (4 * valor_hora_acompanhamento_pres)
                 
         elif opcao == "Plano de Seguimento (3 Meses)":
@@ -110,7 +109,6 @@ if st.session_state.autenticado:
             inclui_nutri = st.radio("Incluir consulta nutricional?", ["Não", "Sim"])
             if inclui_nutri == "Sim":
                 qtd_nutri = st.number_input("Quantas consultas com a nutricionista?", min_value=1, step=1)
-                valor_venda_nutri = valor_custo_nutri * margem_lucro
 
     # --- LÓGICA DE MEDICAÇÃO ---
     valor_medicacao_total = 0
@@ -212,7 +210,6 @@ if st.session_state.autenticado:
             st.write("---")
             st.write("📱 **Copie o texto abaixo para enviar ao paciente:**")
             
-            # Montando o texto da mensagem
             mensagem_wp = f"Olá! Tudo bem? Segue o detalhamento do seu orçamento:\n\n"
             mensagem_wp += f"📋 *Pacote:* {nome_plano}\n"
             
@@ -231,7 +228,6 @@ if st.session_state.autenticado:
             mensagem_wp += f"\n💰 *Investimento Total:* R$ {valor_total_bruto:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
             mensagem_wp += f"\n\nQualquer dúvida, estou à disposição!"
             
-            # Caixa de código com botão de cópia nativo
             st.code(mensagem_wp, language="text")
 
         with aba_clinica:
