@@ -10,7 +10,7 @@ if "autenticado" not in st.session_state:
 # --- TELA DE SENHA ---
 if not st.session_state.autenticado:
     st.title("Acesso Restrito 🔒")
-    senha_digitada = st.text_input("Digite a senha para acessar a calculadora:", type="password")
+    senha_digitada = st.text_input("Digite a senha para aceder à calculadora:", type="password")
     
     if senha_digitada == "senha123": 
         st.session_state.autenticado = True
@@ -32,16 +32,19 @@ if st.session_state.autenticado:
     valor_custo_nutri = 250
     
     # Valores Medicação e Margens
-    margem_lucro = 1.50
+    margem_lucro_padrao = 1.50 # 50% de lucro (Tirzepatida e Nutrição)
+    margem_vit_d = 7.50        # 650% de lucro (Custo x 7.5)
+    margem_vit_b12 = 6.00      # 500% de lucro (Custo x 6)
     
     custo_base_tirzepatida = 63.74
-    venda_2_5mg = custo_base_tirzepatida * 1 * margem_lucro
-    venda_5_0mg = custo_base_tirzepatida * 2 * margem_lucro
-    venda_7_5mg = custo_base_tirzepatida * 3 * margem_lucro
-    venda_10_0mg = custo_base_tirzepatida * 4 * margem_lucro
+    venda_2_5mg = custo_base_tirzepatida * 1 * margem_lucro_padrao
+    venda_5_0mg = custo_base_tirzepatida * 2 * margem_lucro_padrao
+    venda_7_5mg = custo_base_tirzepatida * 3 * margem_lucro_padrao
+    venda_10_0mg = custo_base_tirzepatida * 4 * margem_lucro_padrao
     
     custo_vitamina = 20.00
-    venda_vitamina = custo_vitamina * margem_lucro
+    venda_vit_d = custo_vitamina * margem_vit_d
+    venda_vit_b12 = custo_vitamina * margem_vit_b12
 
     # --- INTERFACE (BOTÕES E MENUS) ---
     modalidade = st.radio("Modalidade de atendimento:", ["Presencial", "Online (Telemedicina)"])
@@ -51,7 +54,7 @@ if st.session_state.autenticado:
     valor_medico = 0
     qtd_nutri = 0
     # Regra global: a venda da nutrição SEMPRE tem a margem de 50%
-    valor_venda_nutri = valor_custo_nutri * margem_lucro 
+    valor_venda_nutri = valor_custo_nutri * margem_lucro_padrao 
     nome_plano = ""
     
     # --- LÓGICA ONLINE ---
@@ -170,8 +173,8 @@ if st.session_state.autenticado:
         with col_v2:
             qtd_vit_b12 = st.number_input("Qtd Vitamina B12", min_value=0, step=1)
             
-        valor_vit_d = qtd_vit_d * venda_vitamina
-        valor_vit_b12 = qtd_vit_b12 * venda_vitamina
+        valor_vit_d = qtd_vit_d * venda_vit_d
+        valor_vit_b12 = qtd_vit_b12 * venda_vit_b12
         valor_medicacao_total += (valor_vit_d + valor_vit_b12)
         
         custo_real_medicacao += (qtd_vit_d + qtd_vit_b12) * custo_vitamina
