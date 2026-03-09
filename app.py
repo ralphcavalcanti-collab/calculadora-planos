@@ -28,7 +28,7 @@ if st.session_state.autenticado:
     valor_hora_presencial = 750
     valor_hora_acompanhamento_pres = 500
     valor_consulta_online = 550
-    valor_hora_acompanhamento_on = 350 # Mantido na base caso seja necessário no futuro
+    valor_hora_acompanhamento_on = 350
     valor_custo_nutri = 250
     
     # Valores Medicação e Margens
@@ -44,11 +44,7 @@ if st.session_state.autenticado:
     venda_vitamina = custo_vitamina * margem_lucro
 
     # --- INTERFACE (BOTÕES E MENUS) ---
-    col1, col2 = st.columns(2)
-    with col1:
-        modalidade = st.radio("Modalidade de atendimento:", ["Presencial", "Online (Telemedicina)"])
-    with col2:
-        primeira_vez = st.radio("O paciente é de Primeira Vez?", ["Sim", "Não"])
+    modalidade = st.radio("Modalidade de atendimento:", ["Presencial", "Online (Telemedicina)"])
 
     st.divider()
 
@@ -70,7 +66,6 @@ if st.session_state.autenticado:
         if opcao == "Plano de Acompanhamento Online (2 Meses)":
             nome_plano = opcao
             qtd_nutri = 2
-            # Nova matemática: apenas 2 consultas online, sem hora de acompanhamento
             valor_medico = 2 * valor_consulta_online
                 
         elif opcao in ["1 Consulta TM", "2 Consultas TM"]:
@@ -97,10 +92,8 @@ if st.session_state.autenticado:
         if opcao == "Plano Inicial (2 Meses)":
             nome_plano = opcao
             qtd_nutri = 2
-            if primeira_vez == "Sim":
-                valor_medico = (3 * valor_hora_presencial) + (4 * valor_hora_acompanhamento_pres)
-            else:
-                valor_medico = (2 * valor_hora_presencial) + (4 * valor_hora_acompanhamento_pres)
+            # Como retiramos a pergunta de 1ª vez, fixamos em 2h de consulta + 4h de acompanhamento
+            valor_medico = (2 * valor_hora_presencial) + (4 * valor_hora_acompanhamento_pres)
                 
         elif opcao == "Plano de Seguimento (3 Meses)":
             nome_plano = opcao
@@ -251,12 +244,12 @@ if st.session_state.autenticado:
             
             lucro_liquido = valor_total_bruto - valor_imposto - valor_taxa_cartao - custo_nutri_real - custo_real_medicacao
             
-            st.write(f"**Faturação Bruta:** R$ {valor_total_bruto:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            st.write(f"**Faturamento Bruto:** R$ {valor_total_bruto:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             st.write("---")
             st.write("**Descontos e Custos:**")
             st.write(f"- Impostos (15%): R$ {valor_imposto:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             if valor_taxa_cartao > 0:
-                st.write(f"- Taxa Multibanco/Cartão (3,34%): R$ {valor_taxa_cartao:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+                st.write(f"- Taxa Maquininha (3,34%): R$ {valor_taxa_cartao:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             if custo_nutri_real > 0:
                 st.write(f"- Repasse Nutricionista: R$ {custo_nutri_real:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             if custo_real_medicacao > 0:
