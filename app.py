@@ -104,17 +104,17 @@ if st.session_state.autenticado:
             nome_plano = opcao
             qtd_nutri = 2
             valor_medico = (2 * valor_hora_presencial) + 200  # Consultas + Acompanhamento Médico (2 meses)
-            custo_nutri_real = (2 * 200) + 100              # Consultas a 200 + Acompanhamento Nutri (2 meses)
-            total_nutri_venda = custo_nutri_real * 1.40     # Margem de 40%
+            custo_nutri_real = (2 * 200) + 100                # Consultas a 200 + Acompanhamento Nutri (2 meses)
+            total_nutri_venda = custo_nutri_real * 1.40       # Margem de 40%
             
         elif opcao == "Plano de Acompanhamento Básico Seguimento (3 Meses)":
             nome_plano = opcao
-            qtd_nutri = 3
-            valor_medico = (3 * valor_hora_presencial) + 300  # Consultas + Acompanhamento Médico (3 meses)
-            custo_nutri_real = (3 * 200) + 150              # Consultas a 200 + Acompanhamento Nutri (3 meses)
-            total_nutri_venda = custo_nutri_real * 1.40     # Margem de 40%
+            qtd_nutri = 2 # Ajustado para 2 consultas nutricionais
+            valor_medico = (3 * valor_hora_presencial) + 300  # 3 Consultas + Acompanhamento Médico (3 meses a 100/mês)
+            custo_nutri_real = (2 * 200) + 150                # 2 Consultas a 200 + Acompanhamento Nutri (3 meses a 50/mês)
+            total_nutri_venda = custo_nutri_real * 1.40       # Margem de 40%
             
-        # LÓGICA DOS PLANOS COMPLETOS (Matemática antiga)
+        # LÓGICA DOS PLANOS COMPLETOS
         elif opcao == "Plano de Acompanhamento Completo Inicial (2 Meses)":
             nome_plano = opcao
             qtd_nutri = 2
@@ -151,20 +151,19 @@ if st.session_state.autenticado:
     qtd_2_5 = qtd_5_0 = qtd_7_5 = qtd_10_0 = 0
     qtd_vit_d = qtd_vit_b12 = 0
 
-    # 1. TIRZEPATIDA 
-    if modalidade == "Presencial" and nome_plano != "Selecione uma opção...":
+    # 1. TIRZEPATIDA (Apenas para os Planos de Acompanhamento Completo)
+    planos_com_tirzepatida = [
+        "Plano de Acompanhamento Completo Inicial (2 Meses)",
+        "Plano de Acompanhamento Completo Seguimento (3 Meses)"
+    ]
+    
+    if modalidade == "Presencial" and nome_plano in planos_com_tirzepatida:
         st.divider()
         st.subheader("💊 Tirzepatida")
         
-        is_plano_fechado = "Meses" in nome_plano
-        
-        if is_plano_fechado:
-            limite_app = 8 if "2 Meses" in nome_plano else 12
-            st.write(f"Distribua as **{limite_app} aplicações** inclusas no plano:")
-            max_val = limite_app
-        else:
-            st.write("Adicione a quantidade de aplicações avulsas, se houver:")
-            max_val = 24 
+        limite_app = 8 if "2 Meses" in nome_plano else 12
+        st.write(f"Distribua as **{limite_app} aplicações** inclusas no plano:")
+        max_val = limite_app
         
         c1, c2, c3, c4 = st.columns(4)
         with c1: qtd_2_5 = st.number_input("2,5mg", min_value=0, max_value=max_val, step=1)
@@ -174,11 +173,10 @@ if st.session_state.autenticado:
         
         total_selecionado = qtd_2_5 + qtd_5_0 + qtd_7_5 + qtd_10_0
         
-        if is_plano_fechado:
-            if total_selecionado != limite_app:
-                st.warning(f"⚠️ Atenção: Selecionou {total_selecionado} aplicações. O plano exige {limite_app}.")
-            else:
-                st.success("✅ Quantidade de aplicações correta!")
+        if total_selecionado != limite_app:
+            st.warning(f"⚠️ Atenção: Selecionou {total_selecionado} aplicações. O plano exige {limite_app}.")
+        else:
+            st.success("✅ Quantidade de aplicações correta!")
                 
         valor_tirzepatida = (qtd_2_5 * venda_2_5mg) + (qtd_5_0 * venda_5_0mg) + (qtd_7_5 * venda_7_5mg) + (qtd_10_0 * venda_10_0mg)
         valor_medicacao_total += valor_tirzepatida
@@ -191,7 +189,7 @@ if st.session_state.autenticado:
         if total_selecionado > 0:
             resumo_meds.append(f"Tirzepatida ({total_selecionado} aplicações)")
 
-    # 2. VITAMINAS D e B12
+    # 2. VITAMINAS D e B12 (Aparece para qualquer presencial)
     if modalidade == "Presencial" and nome_plano != "Selecione uma opção...":
         st.divider()
         st.subheader("💉 Vitaminas Injetáveis")
