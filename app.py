@@ -71,8 +71,9 @@ if st.session_state.autenticado:
             nome_plano = opcao
             qtd_nutri = 2
             valor_medico = 2 * valor_consulta_online
-            custo_nutri_real = qtd_nutri * valor_custo_nutri
-            total_nutri_venda = custo_nutri_real * margem_lucro_padrao
+            # Nova regra para Online 2 Meses: Igual aos acompanhamentos presenciais
+            custo_nutri_real = (2 * 200) + 100          
+            total_nutri_venda = custo_nutri_real * 1.40 
                 
         elif opcao in ["1 Consulta TM", "2 Consultas TM"]:
             nome_plano = opcao
@@ -114,7 +115,7 @@ if st.session_state.autenticado:
             custo_nutri_real = (2 * 200) + 150                
             total_nutri_venda = custo_nutri_real * 1.40       
             
-        # LÓGICA DOS PLANOS COMPLETOS (Nova Regra de Nutrição Uniformizada)
+        # LÓGICA DOS PLANOS COMPLETOS
         elif opcao == "Plano de Acompanhamento Completo Inicial (2 Meses)":
             nome_plano = opcao
             qtd_nutri = 2
@@ -124,7 +125,7 @@ if st.session_state.autenticado:
                 
         elif opcao == "Plano de Acompanhamento Completo Seguimento (3 Meses)":
             nome_plano = opcao
-            qtd_nutri = 2 # Padronizado para 2 consultas nutricionais
+            qtd_nutri = 2 
             valor_medico = (3 * valor_hora_presencial) + (6 * valor_hora_acompanhamento_pres)
             custo_nutri_real = (2 * 200) + 150                
             total_nutri_venda = custo_nutri_real * 1.40
