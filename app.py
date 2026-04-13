@@ -24,15 +24,15 @@ if st.session_state.autenticado:
     st.title("Calculadora de Orçamentos 🩺")
     st.write("Selecione as opções abaixo para gerar o orçamento do paciente.")
 
-    # --- VALORES BASE PADRÃO ---
+    # --- VALORES BASE PADRÃO (Presencial/Geral) ---
     valor_hora_presencial = 750
     valor_hora_acompanhamento_pres = 500
     valor_consulta_online = 550
     valor_hora_acompanhamento_on = 350
-    valor_custo_nutri = 250
+    valor_custo_nutri_presencial = 250
     
     # Valores Medicação e Margens Gerais
-    margem_lucro_padrao = 1.50 # 50% de lucro (Tirzepatida e Nutrição Avulsa)
+    margem_lucro_padrao = 1.50 # 50% de lucro (Tirzepatida e Nutrição Avulsa Presencial)
     margem_vit_d = 7.50        # 650% de lucro (Custo x 7.5)
     margem_vit_b12 = 6.00      # 500% de lucro (Custo x 6)
     
@@ -71,8 +71,8 @@ if st.session_state.autenticado:
             nome_plano = opcao
             qtd_nutri = 2
             valor_medico = 2 * valor_consulta_online
-            # Nova regra para Online 2 Meses: Igual aos acompanhamentos presenciais
-            custo_nutri_real = (2 * 200) + 100          
+            # Nova regra Online: Nutri a 150 + 50 de acompanhamento (2 meses). Margem de 40%
+            custo_nutri_real = (2 * 150) + 50          
             total_nutri_venda = custo_nutri_real * 1.40 
                 
         elif opcao in ["1 Consulta TM", "2 Consultas TM"]:
@@ -85,8 +85,9 @@ if st.session_state.autenticado:
             inclui_nutri = st.radio("Incluir consulta nutricional?", ["Não", "Sim"])
             if inclui_nutri == "Sim":
                 qtd_nutri = st.number_input("Quantas consultas com a nutricionista?", min_value=1, step=1)
-                custo_nutri_real = qtd_nutri * valor_custo_nutri
-                total_nutri_venda = custo_nutri_real * margem_lucro_padrao
+                # Nova regra Online Avulsa: Nutri a 150 sem acompanhamento. Margem de 40%
+                custo_nutri_real = qtd_nutri * 150
+                total_nutri_venda = custo_nutri_real * 1.40
 
     # --- LÓGICA PRESENCIAL ---
     elif modalidade == "Presencial":
@@ -141,7 +142,7 @@ if st.session_state.autenticado:
             inclui_nutri = st.radio("Incluir consulta nutricional?", ["Não", "Sim"])
             if inclui_nutri == "Sim":
                 qtd_nutri = st.number_input("Quantas consultas com a nutricionista?", min_value=1, step=1)
-                custo_nutri_real = qtd_nutri * valor_custo_nutri
+                custo_nutri_real = qtd_nutri * valor_custo_nutri_presencial
                 total_nutri_venda = custo_nutri_real * margem_lucro_padrao
 
     # --- LÓGICA DE MEDICAÇÃO ---
