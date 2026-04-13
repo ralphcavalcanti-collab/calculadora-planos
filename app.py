@@ -29,10 +29,9 @@ if st.session_state.autenticado:
     valor_hora_acompanhamento_pres = 500
     valor_consulta_online = 550
     valor_hora_acompanhamento_on = 350
-    valor_custo_nutri_presencial = 250
     
     # Valores Medicação e Margens Gerais
-    margem_lucro_padrao = 1.50 # 50% de lucro (Tirzepatida e Nutrição Avulsa Presencial)
+    margem_lucro_padrao = 1.50 # 50% de lucro (Tirzepatida)
     margem_vit_d = 7.50        # 650% de lucro (Custo x 7.5)
     margem_vit_b12 = 6.00      # 500% de lucro (Custo x 6)
     
@@ -71,7 +70,7 @@ if st.session_state.autenticado:
             nome_plano = opcao
             qtd_nutri = 2
             valor_medico = 2 * valor_consulta_online
-            # Nova regra Online: Nutri a 150 + 50 de acompanhamento (2 meses). Margem de 40%
+            # Nutri a 150 + 50 de acompanhamento (2 meses). Margem de 40%
             custo_nutri_real = (2 * 150) + 50          
             total_nutri_venda = custo_nutri_real * 1.40 
                 
@@ -85,7 +84,7 @@ if st.session_state.autenticado:
             inclui_nutri = st.radio("Incluir consulta nutricional?", ["Não", "Sim"])
             if inclui_nutri == "Sim":
                 qtd_nutri = st.number_input("Quantas consultas com a nutricionista?", min_value=1, step=1)
-                # Nova regra Online Avulsa: Nutri a 150 sem acompanhamento. Margem de 40%
+                # Nutri a 150 sem acompanhamento. Margem de 40%
                 custo_nutri_real = qtd_nutri * 150
                 total_nutri_venda = custo_nutri_real * 1.40
 
@@ -142,8 +141,9 @@ if st.session_state.autenticado:
             inclui_nutri = st.radio("Incluir consulta nutricional?", ["Não", "Sim"])
             if inclui_nutri == "Sim":
                 qtd_nutri = st.number_input("Quantas consultas com a nutricionista?", min_value=1, step=1)
-                custo_nutri_real = qtd_nutri * valor_custo_nutri_presencial
-                total_nutri_venda = custo_nutri_real * margem_lucro_padrao
+                # Nutrição avulsa presencial a 200 com margem de 40%
+                custo_nutri_real = qtd_nutri * 200
+                total_nutri_venda = custo_nutri_real * 1.40
 
     # --- LÓGICA DE MEDICAÇÃO ---
     valor_medicacao_total = 0
