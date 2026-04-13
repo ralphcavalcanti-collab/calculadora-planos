@@ -24,15 +24,15 @@ if st.session_state.autenticado:
     st.title("Calculadora de Orçamentos 🩺")
     st.write("Selecione as opções abaixo para gerar o orçamento do paciente.")
 
-    # --- VALORES BASE ---
+    # --- VALORES BASE PADRÃO ---
     valor_hora_presencial = 750
     valor_hora_acompanhamento_pres = 500
     valor_consulta_online = 550
     valor_hora_acompanhamento_on = 350
     valor_custo_nutri = 250
     
-    # Valores Medicação e Margens
-    margem_lucro_padrao = 1.50 # 50% de lucro (Tirzepatida e Nutrição)
+    # Valores Medicação e Margens Gerais
+    margem_lucro_padrao = 1.50 # 50% de lucro (Tirzepatida e Nutrição Padrão)
     margem_vit_d = 7.50        # 650% de lucro (Custo x 7.5)
     margem_vit_b12 = 6.00      # 500% de lucro (Custo x 6)
     
@@ -51,10 +51,11 @@ if st.session_state.autenticado:
 
     st.divider()
 
+    # Variáveis globais zeradas
     valor_medico = 0
     qtd_nutri = 0
-    # Regra global: a venda da nutrição SEMPRE tem a margem de 50%
-    valor_venda_nutri = valor_custo_nutri * margem_lucro_padrao 
+    custo_nutri_real = 0 
+    total_nutri_venda = 0
     nome_plano = ""
     
     # --- LÓGICA ONLINE ---
@@ -70,6 +71,8 @@ if st.session_state.autenticado:
             nome_plano = opcao
             qtd_nutri = 2
             valor_medico = 2 * valor_consulta_online
+            custo_nutri_real = qtd_nutri * valor_custo_nutri
+            total_nutri_venda = custo_nutri_real * margem_lucro_padrao
                 
         elif opcao in ["1 Consulta TM", "2 Consultas TM"]:
             nome_plano = opcao
@@ -81,27 +84,52 @@ if st.session_state.autenticado:
             inclui_nutri = st.radio("Incluir consulta nutricional?", ["Não", "Sim"])
             if inclui_nutri == "Sim":
                 qtd_nutri = st.number_input("Quantas consultas com a nutricionista?", min_value=1, step=1)
+                custo_nutri_real = qtd_nutri * valor_custo_nutri
+                total_nutri_venda = custo_nutri_real * margem_lucro_padrao
 
     # --- LÓGICA PRESENCIAL ---
     elif modalidade == "Presencial":
         opcao = st.selectbox("Escolha o pacote Presencial:", [
             "Selecione uma opção...",
-            "Plano Inicial (2 Meses)",
-            "Plano de Seguimento (3 Meses)",
+            "Plano de Acompanhamento Básico Inicial (2 Meses)",
+            "Plano de Acompanhamento Básico Seguimento (3 Meses)",
+            "Plano de Acompanhamento Completo Inicial (2 Meses)",
+            "Plano de Acompanhamento Completo Seguimento (3 Meses)",
             "1 Consulta Presencial",
             "2 Consultas Presenciais"
         ])
         
-        if opcao == "Plano Inicial (2 Meses)":
+        # LÓGICA DOS PLANOS BÁSICOS (Custos diferenciados de Nutri e 40% de margem)
+        if opcao == "Plano de Acompanhamento Básico Inicial (2 Meses)":
+            nome_plano = opcao
+            qtd_nutri = 2
+            valor_medico = (2 * valor_hora_presencial) + 200  # Consultas + Acompanhamento Médico (2 meses)
+            custo_nutri_real = (2 * 200) + 100              # Consultas a 200 + Acompanhamento Nutri (2 meses)
+            total_nutri_venda = custo_nutri_real * 1.40     # Margem de 40%
+            
+        elif opcao == "Plano de Acompanhamento Básico Seguimento (3 Meses)":
+            nome_plano = opcao
+            qtd_nutri = 3
+            valor_medico = (3 * valor_hora_presencial) + 300  # Consultas + Acompanhamento Médico (3 meses)
+            custo_nutri_real = (3 * 200) + 150              # Consultas a 200 + Acompanhamento Nutri (3 meses)
+            total_nutri_venda = custo_nutri_real * 1.40     # Margem de 40%
+            
+        # LÓGICA DOS PLANOS COMPLETOS (Matemática antiga)
+        elif opcao == "Plano de Acompanhamento Completo Inicial (2 Meses)":
             nome_plano = opcao
             qtd_nutri = 2
             valor_medico = (2 * valor_hora_presencial) + (4 * valor_hora_acompanhamento_pres)
+            custo_nutri_real = qtd_nutri * valor_custo_nutri
+            total_nutri_venda = custo_nutri_real * margem_lucro_padrao
                 
-        elif opcao == "Plano de Seguimento (3 Meses)":
+        elif opcao == "Plano de Acompanhamento Completo Seguimento (3 Meses)":
             nome_plano = opcao
             qtd_nutri = 3
             valor_medico = (3 * valor_hora_presencial) + (6 * valor_hora_acompanhamento_pres)
+            custo_nutri_real = qtd_nutri * valor_custo_nutri
+            total_nutri_venda = custo_nutri_real * margem_lucro_padrao
             
+        # LÓGICA DAS CONSULTAS AVULSAS
         elif opcao in ["1 Consulta Presencial", "2 Consultas Presenciais"]:
             nome_plano = opcao
             if opcao == "1 Consulta Presencial":
@@ -112,6 +140,8 @@ if st.session_state.autenticado:
             inclui_nutri = st.radio("Incluir consulta nutricional?", ["Não", "Sim"])
             if inclui_nutri == "Sim":
                 qtd_nutri = st.number_input("Quantas consultas com a nutricionista?", min_value=1, step=1)
+                custo_nutri_real = qtd_nutri * valor_custo_nutri
+                total_nutri_venda = custo_nutri_real * margem_lucro_padrao
 
     # --- LÓGICA DE MEDICAÇÃO ---
     valor_medicacao_total = 0
@@ -186,9 +216,6 @@ if st.session_state.autenticado:
 
     # --- CÁLCULO FINAL E ABAS DE RESULTADO ---
     if nome_plano and nome_plano != "Selecione uma opção...":
-        total_nutri_venda = qtd_nutri * valor_venda_nutri
-        custo_nutri_real = qtd_nutri * valor_custo_nutri
-        
         valor_total_bruto = valor_medico + total_nutri_venda + valor_medicacao_total
 
         st.divider()
