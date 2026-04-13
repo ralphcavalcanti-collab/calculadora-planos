@@ -32,7 +32,7 @@ if st.session_state.autenticado:
     valor_custo_nutri = 250
     
     # Valores Medicação e Margens Gerais
-    margem_lucro_padrao = 1.50 # 50% de lucro (Tirzepatida e Nutrição Padrão)
+    margem_lucro_padrao = 1.50 # 50% de lucro (Tirzepatida e Nutrição Avulsa)
     margem_vit_d = 7.50        # 650% de lucro (Custo x 7.5)
     margem_vit_b12 = 6.00      # 500% de lucro (Custo x 6)
     
@@ -99,35 +99,35 @@ if st.session_state.autenticado:
             "2 Consultas Presenciais"
         ])
         
-        # LÓGICA DOS PLANOS BÁSICOS (Custos diferenciados de Nutri e 40% de margem)
+        # LÓGICA DOS PLANOS BÁSICOS
         if opcao == "Plano de Acompanhamento Básico Inicial (2 Meses)":
             nome_plano = opcao
             qtd_nutri = 2
-            valor_medico = (2 * valor_hora_presencial) + 200  # Consultas + Acompanhamento Médico (2 meses)
-            custo_nutri_real = (2 * 200) + 100                # Consultas a 200 + Acompanhamento Nutri (2 meses)
-            total_nutri_venda = custo_nutri_real * 1.40       # Margem de 40%
+            valor_medico = (2 * valor_hora_presencial) + 200  
+            custo_nutri_real = (2 * 200) + 100                
+            total_nutri_venda = custo_nutri_real * 1.40       
             
         elif opcao == "Plano de Acompanhamento Básico Seguimento (3 Meses)":
             nome_plano = opcao
-            qtd_nutri = 2 # Ajustado para 2 consultas nutricionais
-            valor_medico = (3 * valor_hora_presencial) + 300  # 3 Consultas + Acompanhamento Médico (3 meses a 100/mês)
-            custo_nutri_real = (2 * 200) + 150                # 2 Consultas a 200 + Acompanhamento Nutri (3 meses a 50/mês)
-            total_nutri_venda = custo_nutri_real * 1.40       # Margem de 40%
+            qtd_nutri = 2 
+            valor_medico = (3 * valor_hora_presencial) + 300  
+            custo_nutri_real = (2 * 200) + 150                
+            total_nutri_venda = custo_nutri_real * 1.40       
             
-        # LÓGICA DOS PLANOS COMPLETOS
+        # LÓGICA DOS PLANOS COMPLETOS (Nova Regra de Nutrição Uniformizada)
         elif opcao == "Plano de Acompanhamento Completo Inicial (2 Meses)":
             nome_plano = opcao
             qtd_nutri = 2
             valor_medico = (2 * valor_hora_presencial) + (4 * valor_hora_acompanhamento_pres)
-            custo_nutri_real = qtd_nutri * valor_custo_nutri
-            total_nutri_venda = custo_nutri_real * margem_lucro_padrao
+            custo_nutri_real = (2 * 200) + 100                
+            total_nutri_venda = custo_nutri_real * 1.40
                 
         elif opcao == "Plano de Acompanhamento Completo Seguimento (3 Meses)":
             nome_plano = opcao
-            qtd_nutri = 3
+            qtd_nutri = 2 # Padronizado para 2 consultas nutricionais
             valor_medico = (3 * valor_hora_presencial) + (6 * valor_hora_acompanhamento_pres)
-            custo_nutri_real = qtd_nutri * valor_custo_nutri
-            total_nutri_venda = custo_nutri_real * margem_lucro_padrao
+            custo_nutri_real = (2 * 200) + 150                
+            total_nutri_venda = custo_nutri_real * 1.40
             
         # LÓGICA DAS CONSULTAS AVULSAS
         elif opcao in ["1 Consulta Presencial", "2 Consultas Presenciais"]:
